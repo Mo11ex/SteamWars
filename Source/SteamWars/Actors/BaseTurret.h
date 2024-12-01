@@ -43,8 +43,8 @@ private:
 	FVector EndLocation;
 	FRotator TempRotation;
 	double CurrentYaw;
+	double 	RotationDirection;
 	bool Captured;
-	int8_t RotationDirection;
 	FCollisionQueryParams CollisionParams;
 	AActor* PlayerActor;
 
