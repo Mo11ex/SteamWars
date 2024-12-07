@@ -1,11 +1,13 @@
 ﻿#include "SWFPSCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "SWTypes.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/CharacterComponents/SWCharacterEquipmentComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputData/InputDataAsset.h"
-#include "AbilitySystem/SWAbilitySystemComponent.h"
+#include "Components/CharacterComponents/AbilitySystem/SWAbilitySystemComponent.h"
 #include "Player/SWPlayerState.h"
 
 
@@ -49,6 +51,28 @@ void ASWFPSCharacter::OnRep_PlayerState()
 
 	InitAbilitySystemComponent();
 	InitDefaultAttributes();
+
+	//InitBinds();
+	
+	AbilitySystemComponent->SetTagMapCount(DeadTag, 0);
+	
+	SetHealth(GetMaxHealth());
+	SetStamina(GetMaxStamina());
+}
+
+void ASWFPSCharacter::InitBinds() const
+{
+	if(AbilitySystemComponent && InputComponent)
+	{
+		const FGameplayAbilityInputBinds Binds(
+			"Confirm",
+			"Cancel",
+			FTopLevelAssetPath(FName("SWTypes"), FName("ESWAbilityInputID")),
+			static_cast<int32>(ESWAbilityInputID::Confirm),
+			static_cast<int32>(ESWAbilityInputID::Cancel));
+
+		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, Binds);
+	}
 }
 
 void ASWFPSCharacter::BeginPlay()
@@ -84,7 +108,11 @@ void ASWFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 		EnhancedInputComponent->BindAction(InputActions->CrouchAction, ETriggerEvent::Triggered, this, &ASWFPSCharacter::StartCrouch);
 		EnhancedInputComponent->BindAction(InputActions->CrouchAction, ETriggerEvent::Completed, this, &ASWFPSCharacter::StopCrouch);
+
+		EnhancedInputComponent->BindAction(InputActions->Shoot, ETriggerEvent::Triggered, this, &ASWFPSCharacter::FairShootHandle);
 	}
+
+	//InitBinds();
 }
 
 void ASWFPSCharacter::Move(const FInputActionValue& Value)
@@ -129,6 +157,16 @@ void ASWFPSCharacter::StopJumping()
 	Super::StopJumping();
 }
 
+void ASWFPSCharacter::FairShootHandle()
+{
+	SetLocalInputToASC(true, ESWAbilityInputID::Shoot);
+}
+
+void ASWFPSCharacter::FairShoot()
+{
+	CharacterEquipmentComponent->FireShoot();
+}
+
 void ASWFPSCharacter::InitAbilitySystemComponent()
 {
 	ASWPlayerState* PS = GetPlayerState<ASWPlayerState>();
@@ -141,6 +179,20 @@ void ASWFPSCharacter::InitAbilitySystemComponent()
 		PS->GetAbilitySystemComponent()->InitAbilityActorInfo(PS, this);
 
 		AttributeSet = PS->GetAttributeSet();
+	}
+}
+
+void ASWFPSCharacter::SetLocalInputToASC(bool bIsPressed, const ESWAbilityInputID AbilityInputID)
+{
+	if(!AbilitySystemComponent) return;
+
+	if(bIsPressed)
+	{
+		AbilitySystemComponent->AbilityLocalInputPressed(static_cast<int32>(AbilityInputID));
+	}
+	else
+	{
+		AbilitySystemComponent->AbilityLocalInputReleased(static_cast<int32>(AbilityInputID));
 	}
 }
 

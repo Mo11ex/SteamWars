@@ -5,6 +5,8 @@
 #include "AbilitySystemInterface.h"
 #include "SWBaseCharacter.generated.h"
 
+class USWGameplayAbility;
+class USWCharacterEquipmentComponent;
 class UGameplayAbility;
 class UGameplayEffect;
 class USWAttributeSet;
@@ -21,15 +23,43 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual USWAttributeSet* GetAttributeSet() const;
 
-	virtual void Move(const FInputActionValue& Value) {};
-	virtual void Look(const FInputActionValue& Value) {};
-	virtual void StartCrouch() {};
-	virtual void StopCrouch() {};
+	UFUNCTION(BlueprintCallable, Category = "GAS|Character")
+	virtual bool IsAlive() const;
 	
+	virtual void Die();
+
+	UFUNCTION(BlueprintCallable, Category = "GAS|Character")
+	virtual void FinishDying();
+	
+	const USWCharacterEquipmentComponent* GetEquipmentComponent() const;
+
+	/*---------------------------------Attributes------------------------------------*/
+	UFUNCTION(BlueprintCallable, Category = "GAS|Character|Attributes")
+	float GetHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GAS|Character|Attributes")
+	float GetMaxHealth() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "GAS|Character|Attributes")
+	float GetStamina() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GAS|Character|Attributes")
+	float GetMaxStamina() const;	
+	/*-------------------------------------------------------------------------------*/
+
 protected:
 	void GiveDefaultAbilities();
 	void InitDefaultAttributes() const;
 
+	virtual void SetHealth(float Health);
+	virtual void SetStamina(float Stamina);
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS|Animation")
+	UAnimMontage* DeathMontage;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Components")
+	USWCharacterEquipmentComponent* CharacterEquipmentComponent;
+	
 	UPROPERTY()
 	TObjectPtr<class USWAbilitySystemComponent> AbilitySystemComponent;
 
@@ -37,8 +67,11 @@ protected:
 	TObjectPtr<USWAttributeSet> AttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
-	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
+	TArray<TSubclassOf<USWGameplayAbility>> DefaultAbilities;
 
+	UPROPERTY()
+	uint8 bAbilitiesInitialized:1;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Ability")
 	TSubclassOf<UGameplayEffect> DefaultAttributeEffect;
 };

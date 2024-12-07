@@ -1,8 +1,11 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "SWBaseCharacter.h"
 #include "SWFPSCharacter.generated.h"
+
+enum class ESWAbilityInputID : uint8;
 
 UCLASS()
 class STEAMWARS_API ASWFPSCharacter : public ASWBaseCharacter
@@ -14,8 +17,15 @@ public:
 
 	// GAS Server only
 	virtual void PossessedBy(AController* NewController) override;
+	
 	// GAS Client only
 	virtual void OnRep_PlayerState() override;
+
+	void InitBinds() const;
+	
+	USkeletalMeshComponent* GetFPSMesh() const { return FirstPersonMeshComponent; }
+
+	void FairShoot();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -33,23 +43,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	class UInputDataAsset* InputActions;
 	/*------------------------------------------------*/
+
+	FGameplayTag DeadTag;
 	
 public:
 	virtual void Tick(float DeltaTime) override;
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	FGameplayTag SuccessTag;
+	FGameplayTag FailedTag;
+
 private:
 	/*---------------Movement---------------*/
-	virtual void Move(const FInputActionValue& Value) override;
-	virtual void Look(const FInputActionValue& Value) override;
-	virtual void StartCrouch() override;
-	virtual void StopCrouch() override;
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
+	void StartCrouch();
+	void StopCrouch();
 	virtual void Jump() override;
 	virtual void StopJumping() override;
 	/*---------------------------------------*/
+	void FairShootHandle();
+	
 
 	void InitAbilitySystemComponent();
 
-	const FName SocketFPCamera = FName("CameraSocket");
+	void SetLocalInputToASC(bool bIsPressed, const ESWAbilityInputID AbilityInputID);
 };

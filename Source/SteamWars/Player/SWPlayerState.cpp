@@ -1,6 +1,6 @@
 ﻿#include "SWPlayerState.h"
-#include "AbilitySystem/SWAbilitySystemComponent.h"
-#include "AbilitySystem/SWAttributeSet.h"
+#include "Components/CharacterComponents/AbilitySystem/SWAbilitySystemComponent.h"
+#include "Components/CharacterComponents/AbilitySystem/AttributeSet/SWAttributeSet.h"
 
 ASWPlayerState::ASWPlayerState()
 {
