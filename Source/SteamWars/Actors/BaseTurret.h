@@ -16,39 +16,35 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	//Нужно указывать VisibleAnywhere и BlueprintReadOnly, тк нам не нужно его изменять его из BP, а тем более изменять.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* Basement;
-
-	//Нужно указывать VisibleAnywhere и BlueprintReadOnly, тк нам не нужно его изменять его из BP, а тем более изменять.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components") 
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") 
 	UStaticMeshComponent* Gun;
-
-	//Здесь всё хорошо, тк эти параметры нужно будет изменять и с карты и с BP.
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	double SphereRadius = 100.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	double MaxRotationAngle = 30.0f;
+	float SphereRadius = 100.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-	double LookRadius = 500;
+	float RangeOfVisibility = 800.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	float MaxRotationAngle = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	float RotationSpeed = 1.0f;
 
 private:
 	FTimerHandle TimerHandle;
 	
-	TArray<FHitResult> TempHits;
-	
-	FVector StartLocation;
-	FVector EndLocation;
-	FRotator TempRotation;
-	double CurrentYaw;
-	double 	RotationDirection;
-	bool Captured;
+	bool Captured = false;
 	FCollisionQueryParams CollisionParams;
-	AActor* PlayerActor;
 
+	TWeakObjectPtr<AActor> CaptureActor;
+	
+	float TargetRotationAngle;
+	float CurrentRotationAngle;
+	
 	void TurretUpdate();
-	void LookAtPlayer(AActor* Actor);
-	void RotateTurret(FRotator Rotator);
+	void RotateTurret();
 };
