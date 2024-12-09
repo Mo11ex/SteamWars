@@ -91,9 +91,11 @@ void ABaseTurret::RotateTurret()
 			const FVector PlayerLocation = HitActor->GetActorLocation();
 			const FVector DirectionToPlayer = (PlayerLocation - GetActorLocation()).GetSafeNormal();
 			FRotator NewRotation = DirectionToPlayer.Rotation();
-
+			float ClampedPitch = FMath::Clamp(NewRotation.Pitch, MinPitch, MaxPitch);
+			
 			FRotator ZRotation(0.0f, NewRotation.Yaw, 0.0f);
-			FRotator XRotation(NewRotation.Pitch, 0.0f, 0.0f);
+			FRotator XRotation(ClampedPitch, 0.0f, 0.0f);
+			
 			Basement->SetRelativeRotation(ZRotation);
 			Gun->SetRelativeRotation(XRotation);
 		}
