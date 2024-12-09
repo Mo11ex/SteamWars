@@ -13,104 +13,95 @@ ABaseTurret::ABaseTurret()
 	Gun = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Gun"));
 	Gun->SetupAttachment(Basement);
 	Gun->SetRelativeLocation(FVector(0, 0, 0));
-	
-	RotationDirection = 1;
-	CurrentYaw = 0.0f;
-	Captured = false;
-	TempRotation = this->GetActorRotation();
 }
 
 void ABaseTurret::BeginPlay()
 {
 	Super::BeginPlay();
 
+	CurrentRotationAngle = GetActorRotation().Yaw;
+	TargetRotationAngle = CurrentRotationAngle + MaxRotationAngle/2.0f;
+	
 	CollisionParams.AddIgnoredActor(this);
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ABaseTurret::TurretUpdate, 0.05f, true);
 }
 
 void ABaseTurret::TurretUpdate()
 {
-	StartLocation = this->GetActorLocation();
-
-	FCollisionShape CollisionShape = FCollisionShape::MakeSphere(SphereRadius);
-	TArray<FHitResult> HitResults;
-	
-	bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation,
-	FQuat::Identity, ECC_Pawn, CollisionShape, CollisionParams);
- 
-	if (bHit && !Captured)
+	if(!Captured)
 	{
-		for (const FHitResult& Hit : HitResults)
+		const FVector StartLocation = GetActorLocation();
+		const FVector Direction = GetActorForwardVector();
+		const FVector EndLocation = StartLocation + Direction * RangeOfVisibility;
+
+		DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Blue, false, 0.1f, 0, 0);
+		DrawDebugSphere(GetWorld(), EndLocation, SphereRadius, 10, FColor::Red, false, 0.1f);
+		DrawDebugSphere(GetWorld(), StartLocation, SphereRadius, 10, FColor::Red, false, 0.1f);
+
+		const FCollisionShape CollisionShape = FCollisionShape::MakeSphere(SphereRadius);
+		TArray<FHitResult> HitResults;
+
+		const bool bHit = GetWorld()->SweepMultiByChannel(HitResults, StartLocation, EndLocation,
+		                                                  FQuat::Identity, ECC_Pawn, CollisionShape, CollisionParams);
+	 
+		if (bHit)
 		{
-			DrawDebugSphere(GetWorld(), Hit.Location, SphereRadius, 1, FColor::Red,
-		false, 0.1f);
-			
-			AActor* HitActor = Hit.GetActor();
-			
-			if (HitActor->IsA(ASWFPSCharacter::StaticClass()))
+			for (const FHitResult& Hit : HitResults)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *HitActor->GetName());
-				PlayerActor = HitActor;
-				Captured = true;
-				break;
+				DrawDebugSphere(GetWorld(), Hit.Location, 30, 24, FColor::Green,
+			false, 0.1f);
+								
+				if (Hit.GetActor()->IsA(ASWFPSCharacter::StaticClass()))
+				{
+					CaptureActor = Hit.GetActor();
+					Captured = true;
+					break;
+				}
 			}
-			
-			CurrentYaw += TempRotation.Yaw + RotationDirection * MaxRotationAngle * 0.1f;
-
-			if (CurrentYaw >= MaxRotationAngle) {
-				CurrentYaw = MaxRotationAngle;
-				RotationDirection *= -1;
-			}
-			else if (CurrentYaw <= -MaxRotationAngle) {
-				CurrentYaw = -MaxRotationAngle;
-				RotationDirection *= -1;
-			}
-
-			EndLocation.X = LookRadius * FMath::Cos(FMath::DegreesToRadians(CurrentYaw));
-			EndLocation.Y = LookRadius * FMath::Sin(FMath::DegreesToRadians(CurrentYaw));
-			EndLocation.Z = Gun->GetRelativeLocation().Z;
-			RotateTurret(FRotator(0, CurrentYaw, 0));
 		}
 	}
-	
-	if (Captured) LookAtPlayer(PlayerActor);
-	DrawDebugSphere(GetWorld(), StartLocation, SphereRadius, 10, FColor::Red, false, 0.1f);
+	RotateTurret();
 }
 
-void ABaseTurret::LookAtPlayer(AActor* Actor)
+void ABaseTurret::RotateTurret()
 {
-	FHitResult HitResult;
-	GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, Actor->GetActorLocation(), ECC_Pawn, CollisionParams);
+	if(!Captured)
+	{
+		CurrentRotationAngle = FMath::FInterpTo(CurrentRotationAngle, TargetRotationAngle, 0.05f, RotationSpeed);
 	
-	AActor* HitActor = HitResult.GetActor();
-
-	if (HitActor->IsA(ASWFPSCharacter::StaticClass()))
-	{
-		ASWFPSCharacter* Character = Cast<ASWFPSCharacter>(Actor);
-		if (!Character) return;
-		FVector PlayerLocation = Character->GetActorLocation();
-		FVector DirectionToPlayer = (PlayerLocation - GetActorLocation()).GetSafeNormal();
-		FRotator NewRotation = DirectionToPlayer.Rotation();
-		
-		RotateTurret(NewRotation);
+		if (FMath::IsNearlyEqual(CurrentRotationAngle, TargetRotationAngle, 1.0f)) 
+		{
+			MaxRotationAngle *= -1.0f;
+			TargetRotationAngle = CurrentRotationAngle + MaxRotationAngle;
+		}
+	
+		FRotator NewRotation = FRotator(0.0f, CurrentRotationAngle, 0.0f);
+		SetActorRelativeRotation(NewRotation);
 	}
-	else 
+	else
 	{
-		CollisionParams.AddIgnoredActor(this); 
-		Captured = false;
-	}
-}
+		const FVector StartLocation = GetActorLocation();
+		FHitResult HitResult;
+		GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, CaptureActor->GetActorLocation(), ECC_Pawn, CollisionParams);
 
-void ABaseTurret::RotateTurret(FRotator Rotator)
-{	
-	FRotator GunRotation = Gun->GetRelativeRotation();
-	FRotator TargetBaseRotation = FRotator(GunRotation.Pitch, Rotator.Yaw, GunRotation.Roll);
-	GunRotation = FMath::RInterpTo(GunRotation, TargetBaseRotation, 0.05f, 1);
-	Gun->SetRelativeRotation(GunRotation);
+		const AActor* HitActor = HitResult.GetActor();
 
-	if (Captured) {
-		FRotator TargetGunRotation = FRotator(Rotator.Pitch, GunRotation.Yaw, GunRotation.Roll);
-		GunRotation = FMath::RInterpTo(GunRotation, TargetGunRotation, 0.05f, 1);
-		Gun->SetRelativeRotation(GunRotation);
+		if (HitActor->IsA(ASWFPSCharacter::StaticClass()))
+		{
+			const FVector PlayerLocation = HitActor->GetActorLocation();
+			const FVector DirectionToPlayer = (PlayerLocation - GetActorLocation()).GetSafeNormal();
+			FRotator NewRotation = DirectionToPlayer.Rotation();
+
+			FRotator ZRotation(0.0f, NewRotation.Yaw, 0.0f);
+			FRotator XRotation(NewRotation.Pitch, 0.0f, 0.0f);
+			Basement->SetRelativeRotation(ZRotation);
+			Gun->SetRelativeRotation(XRotation);
+		}
+		else 
+		{
+			Captured = false;
+			CurrentRotationAngle = GetActorRotation().Yaw;
+			TargetRotationAngle = CurrentRotationAngle + MaxRotationAngle/2.0f;
+		}
 	}
 }
