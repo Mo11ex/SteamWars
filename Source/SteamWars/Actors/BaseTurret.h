@@ -7,7 +7,7 @@
 UCLASS()
 class STEAMWARS_API ABaseTurret : public AActor
 {
-	GENERATED_BODY()
+	GENERATED_BODY() 
 
 public:
 	ABaseTurret();
@@ -33,6 +33,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	float RotationSpeed = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	float MinPitch = -30.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	float MaxPitch = 30.0f;
 
 private:
 	FTimerHandle TimerHandle;
