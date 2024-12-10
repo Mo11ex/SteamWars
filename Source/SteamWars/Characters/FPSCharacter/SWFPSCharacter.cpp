@@ -6,8 +6,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/CharacterComponents/SWCharacterEquipmentComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "InputData/InputDataAsset.h"
+#include "../InputData/InputDataAsset.h"
 #include "Components/CharacterComponents/AbilitySystem/SWAbilitySystemComponent.h"
+#include "Components/CharacterComponents/AbilitySystem/AttributeSet/SWAttributeSet.h"
 #include "Player/SWPlayerState.h"
 
 
@@ -34,6 +35,8 @@ ASWFPSCharacter::ASWFPSCharacter()
 	GetMesh()->bCastHiddenShadow = true;
 
 	GetCharacterMovement()->bOrientRotationToMovement = 0;
+
+	DeadTag = FGameplayTag::RequestGameplayTag(FName("State.Dead"));
 }
 
 void ASWFPSCharacter::PossessedBy(AController* NewController)
@@ -41,8 +44,22 @@ void ASWFPSCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	InitAbilitySystemComponent();
-	GiveDefaultAbilities();
 	InitDefaultAttributes();
+
+	AbilitySystemComponent->SetTagMapCount(DeadTag, 0);
+
+	// Set Health/Stamina to their max. This is only necessary for *Respawn*.
+	SetHealth(GetMaxHealth());
+	SetStamina(GetMaxStamina());
+
+	AddStartupEffects();
+	GiveDefaultAbilities();
+
+	/*AGDPlayerController* PC = Cast<AGDPlayerController>(GetController());
+	if (PC)
+	{
+		PC->CreateHUD();
+	}*/
 }
 
 void ASWFPSCharacter::OnRep_PlayerState()
@@ -52,27 +69,10 @@ void ASWFPSCharacter::OnRep_PlayerState()
 	InitAbilitySystemComponent();
 	InitDefaultAttributes();
 
-	//InitBinds();
-	
 	AbilitySystemComponent->SetTagMapCount(DeadTag, 0);
 	
 	SetHealth(GetMaxHealth());
 	SetStamina(GetMaxStamina());
-}
-
-void ASWFPSCharacter::InitBinds() const
-{
-	if(AbilitySystemComponent && InputComponent)
-	{
-		const FGameplayAbilityInputBinds Binds(
-			"Confirm",
-			"Cancel",
-			FTopLevelAssetPath(FName("SWTypes"), FName("ESWAbilityInputID")),
-			static_cast<int32>(ESWAbilityInputID::Confirm),
-			static_cast<int32>(ESWAbilityInputID::Cancel));
-
-		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, Binds);
-	}
 }
 
 void ASWFPSCharacter::BeginPlay()
@@ -112,7 +112,6 @@ void ASWFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(InputActions->Shoot, ETriggerEvent::Triggered, this, &ASWFPSCharacter::FairShootHandle);
 	}
 
-	//InitBinds();
 }
 
 void ASWFPSCharacter::Move(const FInputActionValue& Value)
@@ -167,6 +166,21 @@ void ASWFPSCharacter::FairShoot()
 	CharacterEquipmentComponent->FireShoot();
 }
 
+void ASWFPSCharacter::FinishDying()
+{
+	/*if (GetLocalRole() == ROLE_Authority)
+	{
+		AGASDocumentationGameMode* GM = Cast<AGASDocumentationGameMode>(GetWorld()->GetAuthGameMode());
+
+		if (GM)
+		{
+			GM->HeroDied(GetController());
+		}
+	}*/
+	
+	Super::FinishDying();
+}
+
 void ASWFPSCharacter::InitAbilitySystemComponent()
 {
 	ASWPlayerState* PS = GetPlayerState<ASWPlayerState>();
@@ -184,7 +198,7 @@ void ASWFPSCharacter::InitAbilitySystemComponent()
 
 void ASWFPSCharacter::SetLocalInputToASC(bool bIsPressed, const ESWAbilityInputID AbilityInputID)
 {
-	if(!AbilitySystemComponent) return;
+	if(!AbilitySystemComponent.IsValid()) return;
 
 	if(bIsPressed)
 	{

@@ -1,12 +1,8 @@
 #include "SWAbilitySystemComponent.h"
 
-USWAbilitySystemComponent::USWAbilitySystemComponent()
+void USWAbilitySystemComponent::ReceiveDamage(USWAbilitySystemComponent* SourceASC, float UnmitigatedDamage,
+	float MitigatedDamage)
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	SetIsReplicated(true);
+	ReceivedDamage.Broadcast(SourceASC, UnmitigatedDamage, MitigatedDamage);
 }
 
-void USWAbilitySystemComponent::BeginPlay()
-{
-	Super::BeginPlay();
-}

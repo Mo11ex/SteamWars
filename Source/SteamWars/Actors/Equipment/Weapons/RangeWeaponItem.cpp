@@ -1,7 +1,7 @@
 ﻿#include "RangeWeaponItem.h"
 
 #include "Characters/SWBaseCharacter.h"
-#include "Characters/SWFPSCharacter.h"
+#include "Characters/FPSCharacter/SWFPSCharacter.h"
 #include "Components/Weapon/WeaponBarrelComponent.h"
 
 

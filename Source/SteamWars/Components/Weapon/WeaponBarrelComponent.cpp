@@ -5,7 +5,7 @@
 #include "GameplayEffect.h"
 #include "InterchangeResult.h"
 #include "SWTypes.h"
-#include "Characters/SWFPSCharacter.h"
+#include "Characters/FPSCharacter/SWFPSCharacter.h"
 
 
 UWeaponBarrelComponent::UWeaponBarrelComponent()

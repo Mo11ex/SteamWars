@@ -42,7 +42,7 @@ void ABarrel::ExploseBarrel()
 }
 
 void ABarrel::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
+	AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit) const
 {
 	if (OtherActor && OtherActor != this)
 	{ }

@@ -1,5 +1,5 @@
 ﻿#include "SWBaseAnimInstance.h"
-#include "../SWFPSCharacter.h"
+#include "../FPSCharacter/SWFPSCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void USWBaseAnimInstance::NativeBeginPlay()

@@ -1,17 +1,17 @@
 ﻿#include "FireShoot.h"
 
-#include "Characters/SWFPSCharacter.h"
+#include "Characters/FPSCharacter/SWFPSCharacter.h"
 #include "Components/CharacterComponents/AbilitySystem/AbilityTasks/AbilityTask_SuccessFailEvent.h"
 
 UFireShoot::UFireShoot()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
-	FGameplayTag ShootTag = FGameplayTag::RequestGameplayTag(FName("Weapon.Hit"));
+	FGameplayTag ShootTag = FGameplayTag::RequestGameplayTag(FName("Ability.Weapon.Hit"));
 	AbilityTags.AddTag(ShootTag);
 	ActivationOwnedTags.AddTag(ShootTag);
 
-	ActivationBlockedTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Weapon")));
+	ActivationBlockedTags.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Weapon")));
 }
 
 void UFireShoot::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

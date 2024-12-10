@@ -1,7 +1,7 @@
 ﻿#include "SWCharacterEquipmentComponent.h"
 #include "Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "Characters/SWBaseCharacter.h"
-#include "Characters/SWFPSCharacter.h"
+#include "Characters/FPSCharacter/SWFPSCharacter.h"
 
 
 EEquipableItemType USWCharacterEquipmentComponent::GetCurrentEquippedItemType() const

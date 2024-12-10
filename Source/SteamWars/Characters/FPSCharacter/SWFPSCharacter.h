@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "SWBaseCharacter.h"
+#include "../SWBaseCharacter.h"
 #include "SWFPSCharacter.generated.h"
 
 enum class ESWAbilityInputID : uint8;
@@ -20,12 +20,12 @@ public:
 	
 	// GAS Client only
 	virtual void OnRep_PlayerState() override;
-
-	void InitBinds() const;
 	
 	USkeletalMeshComponent* GetFPSMesh() const { return FirstPersonMeshComponent; }
 
 	void FairShoot();
+
+	virtual void FinishDying() override;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -50,9 +50,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	FGameplayTag SuccessTag;
-	FGameplayTag FailedTag;
 
 private:
 	/*---------------Movement---------------*/

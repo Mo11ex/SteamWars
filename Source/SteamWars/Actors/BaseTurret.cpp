@@ -1,6 +1,6 @@
 ﻿#include "BaseTurret.h"
 
-#include "Characters/SWFPSCharacter.h"
+#include "Characters/FPSCharacter/SWFPSCharacter.h"
 
 
 ABaseTurret::ABaseTurret()
