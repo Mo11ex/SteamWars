@@ -31,8 +31,10 @@ void UWeaponBarrelComponent::Shot(FVector ShotStart, FVector ShotDirection)
 	{
 		FGameplayEffectSpecHandle DamageEffectSpecHandle = ASC->MakeOutgoingSpec(
 					ResponseGameplayEffect, 1, ASC->MakeEffectContext());
+		
 		DamageEffectSpecHandle.Data.Get()->SetSetByCallerMagnitude(
-			FGameplayTag::RequestGameplayTag(FName("DamageData.Base")), 10);
+			FGameplayTag::RequestGameplayTag(FName("DamageData.Base")), Damage);
+		
 		ASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
 	}
 		

@@ -19,15 +19,12 @@ public:
 	void Shot(FVector ShotStart, FVector ShotDirection);
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Barrel Attributes")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Barrel Attributes")
 	float FiringRange = 5000.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTag SuccessTag = FGameplayTag::EmptyTag;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Barrel Attributes")
+	float Damage = 10.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTag FailedTag = FGameplayTag::EmptyTag;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> ResponseGameplayEffect;
 };
