@@ -86,6 +86,7 @@ void ABaseTurret::RotateTurret()
 
 		const AActor* HitActor = HitResult.GetActor();
 
+		if (HitActor)
 		if (HitActor->IsA(ASWFPSCharacter::StaticClass()))
 		{
 			const FVector PlayerLocation = HitActor->GetActorLocation();

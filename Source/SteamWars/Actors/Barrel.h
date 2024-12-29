@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "Barrel.generated.h"
 
+class USphereComponent;
+
 UCLASS()
 class STEAMWARS_API ABarrel : public AActor
 {
@@ -37,9 +39,9 @@ public:
 
 private:
 	FTimerHandle TimerHandle;
-    float CurrentRadius;
+	float CurrentRadius;
 	
 	void ExploseBarrel();
-	void ABarrel::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit) const;
 };
