@@ -25,6 +25,13 @@ AEnemyBaseCharacter::AEnemyBaseCharacter()
 	AttributeSet = HardRefAttributeSet;
 }
 
+void AEnemyBaseCharacter::FinishDying()
+{
+	Super::FinishDying();
+
+	OnEnemyDied.Broadcast();
+}
+
 void AEnemyBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();

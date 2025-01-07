@@ -6,6 +6,8 @@
 
 struct FOnAttributeChangeData;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyDied);
+
 UCLASS()
 class STEAMWARS_API AEnemyBaseCharacter : public ASWBaseCharacter
 {
@@ -13,7 +15,12 @@ class STEAMWARS_API AEnemyBaseCharacter : public ASWBaseCharacter
 
 public:
 	AEnemyBaseCharacter();
-
+	
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnEnemyDied OnEnemyDied;
+	
+	virtual void FinishDying() override;
+	
 protected:
 	virtual void BeginPlay() override;
 	

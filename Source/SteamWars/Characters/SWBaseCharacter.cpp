@@ -129,8 +129,6 @@ EGDHitReactDirection ASWBaseCharacter::GetHitReactDirection(const FVector& Impac
 			return EGDHitReactDirection::Left;
 		}
 	}
-
-	return EGDHitReactDirection::Front;
 }
 
 void ASWBaseCharacter::PlayHitReact_Implementation(FGameplayTag HitDirection, AActor* DamageCauser)

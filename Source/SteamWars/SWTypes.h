@@ -1,6 +1,17 @@
 ﻿#pragma once
+#include "CoreMinimal.h"
 
 #define ECC_Bullet ECC_GameTraceChannel1
+
+UENUM(BlueprintType)
+enum class ESpawnersID : uint8
+{
+	None,
+	One,
+	Two,
+	Three,
+	Four
+};
 
 UENUM(BlueprintType)
 enum class ESWAbilityInputID : uint8
@@ -10,8 +21,6 @@ enum class ESWAbilityInputID : uint8
 	Cancel,
 	Shoot
 };
-
-const FName SocketFPCamera = FName("CameraSocket");
 
 UENUM(BlueprintType)
 enum class EGDHitReactDirection : uint8
@@ -27,3 +36,5 @@ enum class EGDHitReactDirection : uint8
 	// 4
 	Back			UMETA(DisplayName = "Back")
 };
+
+const FName SocketFPCamera = FName("CameraSocket");
