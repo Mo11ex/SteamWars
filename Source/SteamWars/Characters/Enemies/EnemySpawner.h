@@ -20,22 +20,17 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class USphereComponent* SphereComp;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<TSubclassOf<AEnemyBaseCharacter>> EnemyQueue;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	ESpawnersID SpawnerID;
 	
+	UFUNCTION()
+	void HandleEnemyDeath();
+	
 public:
-	virtual void Tick(float DeltaTime) override;
-
 	void SpawnEnemy();
 
 	void AddEnemyToQueue(const TSubclassOf<AEnemyBaseCharacter>& EnemyClass);
-
-	UFUNCTION()
-	void HandleEnemyDeath();
 
 	ESpawnersID GetSpawnID() const;
 
@@ -43,4 +38,5 @@ public:
 
 private:
 	FTimerHandle TimerHandle;
+	TArray<TSubclassOf<AEnemyBaseCharacter>> EnemyQueue;
 };

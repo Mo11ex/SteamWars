@@ -1,9 +1,7 @@
 ﻿#include "SWGameMode.h"
-
 #include "EngineUtils.h"
 #include "Characters/Enemies/EnemyBaseCharacter.h"
 #include "Characters/Enemies/EnemySpawner.h"
-#include "Kismet/GameplayStatics.h"
 
 void ASWGameMode::StartWave()
 {
@@ -29,16 +27,6 @@ void ASWGameMode::EnterTransition()
 
 void ASWGameMode::BuildEnemyPool()
 {
-	/*if(WaveDataTable)
-	{
-		const FWaveData* Pool = WaveDataTable->FindRow<FWaveData>(
-		FName(FString::FromInt(WaveNumber)), "");
-		if(Pool)
-		{
-			EnemyPool = Pool->EnemyPool;
-		}
-	}*/
-
 	if(WaveDataTable)
 	{
 		const FWaveDataFor* Pool = WaveDataTable->FindRow<FWaveDataFor>(

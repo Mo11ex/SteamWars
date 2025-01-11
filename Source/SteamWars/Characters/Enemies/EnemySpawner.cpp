@@ -1,5 +1,4 @@
 ﻿#include "EnemySpawner.h"
-
 #include "EnemyBaseCharacter.h"
 #include "Components/SphereComponent.h"
 #include "GameMode/SWGameMode.h"
@@ -7,12 +6,10 @@
 
 AEnemySpawner::AEnemySpawner()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	SphereComp->SetupAttachment(GetRootComponent());
-
-	
 }
 
 void AEnemySpawner::BeginPlay()
@@ -25,13 +22,6 @@ void AEnemySpawner::BeginPlay()
 	{
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AEnemySpawner::SpawnEnemy, 2.0f, true);
 	}
-}
-
-
-
-void AEnemySpawner::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }
 
 void AEnemySpawner::SpawnEnemy()
@@ -65,14 +55,17 @@ void AEnemySpawner::SpawnEnemy()
 
 void AEnemySpawner::AddEnemyToQueue(const TSubclassOf<AEnemyBaseCharacter>& EnemyClass)
 {
-	EnemyQueue.Add(EnemyClass);
-	
-	TArray<AActor*> OverlappingActors;
-	SphereComp->GetOverlappingActors(OverlappingActors, EnemyClass);
-
-	if(OverlappingActors.IsEmpty())
+	if(EnemyClass)
 	{
-		SpawnEnemy();
+		EnemyQueue.Add(EnemyClass);
+	
+		TArray<AActor*> OverlappingActors;
+		SphereComp->GetOverlappingActors(OverlappingActors, EnemyClass);
+
+		if(OverlappingActors.IsEmpty())
+		{
+			SpawnEnemy();
+		}
 	}
 }
 
@@ -93,8 +86,7 @@ ESpawnersID AEnemySpawner::GetSpawnID() const
 void AEnemySpawner::DebugEnum(ESpawnersID SpawnType)
 {
 	FString EnumString = UEnum::GetValueAsString(SpawnType);
-
-	// Выводим в консоль
+	
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, EnumString);

@@ -34,38 +34,14 @@ struct FWaveDataFor : public FTableRowBase
 	TArray<FWaveSpawnData> SpawnInfos;
 };
 
-USTRUCT(BlueprintType)
-struct FWaveData : public FTableRowBase
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TMap<TSubclassOf<AEnemyBaseCharacter>, int> EnemyPool;
-};
-
 UCLASS()
 class STEAMWARS_API ASWGameMode : public AGameMode
 {
 	GENERATED_BODY()
 
 public:
-	TArray<AActor*> GetSpawners() const;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Spawners")
 	TSubclassOf<AEnemyBaseCharacter> EnemyChar;
-
-	void StartWave();
-	void EndWave();
-	void EnterTransition();
-	void BuildEnemyPool();
-	int GetPoolSize() const;
-	void OnEnemyDefeated();
-	
-	FORCEINLINE FTimerHandle GetTimerHandle() const { return WaveTimer; }
-	
-	TSubclassOf<AEnemyBaseCharacter> GetEnemyFromPool();
-	
-	void NewWave();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	int WaveNumber = 0;
@@ -89,12 +65,20 @@ public:
 	UDataTable* WaveDataTable;
 	
 	virtual void BeginPlay() override;
+	void OnEnemyDefeated();
+	
+	FORCEINLINE FTimerHandle GetTimerHandle() const { return WaveTimer; }
 
 private:
 	FTimerHandle WaveTimer;
 
 	void SpawnEnemy();
-
+	void StartWave();
+	void EnterTransition();
+	void BuildEnemyPool();
+	int GetPoolSize() const;
 	void InitializeSpawners();
 	ESpawnersID GetSpawnerIDForEnemy(TSubclassOf<AEnemyBaseCharacter> Enemy);
+	TSubclassOf<AEnemyBaseCharacter> GetEnemyFromPool();
+	void NewWave();
 };
