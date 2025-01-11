@@ -39,7 +39,7 @@ public:
 
 private:
 	FTimerHandle TimerHandle;
-    float CurrentRadius;
+	float CurrentRadius;
 	
 	void ExploseBarrel();
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
