@@ -18,6 +18,9 @@ public:
 
 	void Shot(FVector ShotStart, FVector ShotDirection);
 
+	float GetFiringRange() const { return FiringRange; };
+	float GetDamage() const { return Damage; };
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Barrel Attributes")
 	float FiringRange = 5000.f;

@@ -4,6 +4,7 @@
 #include "Components/CharacterComponents/AbilitySystem/Abilities/SWGameplayAbility.h"
 #include "FireShoot.generated.h"
 
+class USW_PlayMontageAndWaitForEvent;
 class UAbilityTask_SuccessFailEvent;
 
 UCLASS()
@@ -17,21 +18,31 @@ public:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UAnimMontage* FireHipMontage;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UAnimMontage* FireIronsightsMontage;
+	
 protected:
 	UFUNCTION()
-	void OnCancelled(FGameplayEventData Payload);
+	void OnCancelled(FGameplayTag EventTag, FGameplayEventData EventData);
 
 	UFUNCTION()
-	void EventReceived(FGameplayEventData Payload);
+	void EventReceived(FGameplayTag EventTag, FGameplayEventData Payload);
 
-	UPROPERTY()
+	UFUNCTION()
+	void OnCompleted(FGameplayTag EventTag, FGameplayEventData EventData);
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	TSubclassOf<UGameplayEffect> ResponseGameplayEffect;
 
-public:
-	FGameplayTag SuccessTag;
-	FGameplayTag FailedTag;
 
 private:
-	TWeakObjectPtr<UAbilityTask_SuccessFailEvent> Task;
+	TWeakObjectPtr<USW_PlayMontageAndWaitForEvent> Task;
+	
+	float Range;
+	float Damage;
 	
 };

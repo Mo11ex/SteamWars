@@ -4,6 +4,8 @@
 #include "Actors/Equipment/EquipableItem.h"
 #include "RangeWeaponItem.generated.h"
 
+class UWeaponBarrelComponent;
+
 UCLASS(Blueprintable)
 class STEAMWARS_API ARangeWeaponItem : public AEquipableItem
 {
@@ -13,6 +15,8 @@ public:
 	ARangeWeaponItem();
 
 	void FireShoot();
+
+	UWeaponBarrelComponent* GetWeaponBarrelComponent() const { return WeaponBarrel; }
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

@@ -1,7 +1,13 @@
 ﻿#include "FireShoot.h"
 
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
+#include "Actors/Equipment/Weapons/RangeWeaponItem.h"
 #include "Characters/FPSCharacter/SWFPSCharacter.h"
+#include "Components/CharacterComponents/SWCharacterEquipmentComponent.h"
 #include "Components/CharacterComponents/AbilitySystem/AbilityTasks/AbilityTask_SuccessFailEvent.h"
+#include "Components/CharacterComponents/AbilitySystem/AbilityTasks/SW_PlayMontageAndWaitForEvent.h"
+#include "Components/Weapon/WeaponBarrelComponent.h"
 
 UFireShoot::UFireShoot()
 {
@@ -24,6 +30,17 @@ void UFireShoot::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 	}
 
+	UAnimMontage* MontageToPlay = FireHipMontage;
+
+	if (GetAbilitySystemComponentFromActorInfo()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.AimDownSights"))) &&
+		!GetAbilitySystemComponentFromActorInfo()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.AimDownSights.Removal"))))
+	{
+		MontageToPlay = FireIronsightsMontage;
+	}
+	
+
+	// Only spawn projectiles on the Server.
+	// Predicting projectiles is an advanced topic not covered in this example.
 	if (GetOwningActorFromActorInfo()->GetLocalRole() == ROLE_Authority)
 	{
 		ASWFPSCharacter* Hero = Cast<ASWFPSCharacter>(GetAvatarActorFromActorInfo());
@@ -32,17 +49,57 @@ void UFireShoot::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		}
 
-		Hero->FairShoot();
+		APlayerController* Controller = Hero->GetController<APlayerController>();
+		if(!IsValid(Controller)) return;
 
-		Task = UAbilityTask_SuccessFailEvent::WaitSuccessFailEvent(this, SuccessTag, FailedTag);
+		FVector PlayerViewPoint;
+		FRotator PlayerViewRotation;
+		
+		Controller->GetPlayerViewPoint(PlayerViewPoint, PlayerViewRotation);
 
-		Task->SuccessEventReceived.AddDynamic(this, &UFireShoot::EventReceived);
-		Task->FailEventReceived.AddDynamic(this, &UFireShoot::OnCancelled);
+		FVector ViewDirection = PlayerViewRotation.RotateVector(FVector::ForwardVector);
 
-		Task->ReadyForActivation();
+		Range = Hero->GetEquipmentComponent()->GetCurrentWeapon()->GetWeaponBarrelComponent()->GetFiringRange();
+		Damage = Hero->GetEquipmentComponent()->GetCurrentWeapon()->GetWeaponBarrelComponent()->GetDamage();
+		
+		FVector ShotStart = PlayerViewPoint;
+		FVector ShotEnd = PlayerViewPoint + ViewDirection * Range;
 
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		FHitResult ShotHitResult;
+
+		if(GetWorld()->LineTraceSingleByChannel(ShotHitResult, ShotStart, ShotEnd, ECC_Bullet))
+		{
+			ShotEnd = ShotHitResult.Location;
+			DrawDebugSphere(GetWorld(), ShotEnd, 10.f, 24, FColor::Red, false, 1.f);
+		}
+		DrawDebugLine(GetWorld(), ShotStart, ShotEnd, FColor::Green, false, 1.f, 0, 0.3f);
+
+		FGameplayEffectSpecHandle DamageEffectSpecHandle = MakeOutgoingGameplayEffectSpec(ResponseGameplayEffect, GetAbilityLevel());
+		
+		// Pass the damage to the Damage Execution Calculation through a SetByCaller value on the GameplayEffectSpec
+		DamageEffectSpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), Damage);
+
+		if(UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(ShotHitResult.GetActor()))
+		{
+			DamageEffectSpecHandle = ASC->MakeOutgoingSpec(
+						ResponseGameplayEffect, 1, ASC->MakeEffectContext());
+			
+			DamageEffectSpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("Data.Damage")), Damage);
+		
+			ASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
+		}
+		
 	}
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+	/*Task = USW_PlayMontageAndWaitForEvent::PlayMontageAndWaitForEvent(this, NAME_None, MontageToPlay, FGameplayTagContainer(), 1.0f, NAME_None, false, 1.0f);
+	Task->OnBlendOut.AddDynamic(this, &UFireShoot::EventReceived); //OnCompleted
+	Task->OnCompleted.AddDynamic(this, &UFireShoot::EventReceived); //OnCompleted
+	Task->OnInterrupted.AddDynamic(this, &UFireShoot::EventReceived); //OnCancelled
+	Task->OnCancelled.AddDynamic(this, &UFireShoot::EventReceived); //OnCancelled
+	Task->EventReceived.AddDynamic(this, &UFireShoot::EventReceived);
+	// ReadyForActivation() is how you activate the AbilityTask in C++. Blueprint has magic from K2Node_LatentGameplayTaskCall that will automatically call ReadyForActivation().
+	Task->ReadyForActivation();*/
 }
 
 void UFireShoot::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -56,13 +113,74 @@ void UFireShoot::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGame
 	}
 }
 
-void UFireShoot::OnCancelled(FGameplayEventData Payload)
+void UFireShoot::OnCancelled(FGameplayTag EventTag, FGameplayEventData EventData)
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
-void UFireShoot::EventReceived(FGameplayEventData Payload)
+void UFireShoot::EventReceived(FGameplayTag EventTag, FGameplayEventData Payload)
 {
-	//Add GameplayEffect
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+	if (EventTag == FGameplayTag::RequestGameplayTag(FName("Event.Montage.EndAbility")))
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		return;
+	}
+
+	// Only spawn projectiles on the Server.
+	// Predicting projectiles is an advanced topic not covered in this example.
+	if (GetOwningActorFromActorInfo()->GetLocalRole() == ROLE_Authority && EventTag == FGameplayTag::RequestGameplayTag(FName("Event.Montage.SpawnProjectile")))
+	{
+		ASWFPSCharacter* Hero = Cast<ASWFPSCharacter>(GetAvatarActorFromActorInfo());
+		if (!Hero)
+		{
+			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+		}
+
+		APlayerController* Controller = Hero->GetController<APlayerController>();
+		if(!IsValid(Controller)) return;
+
+		FVector PlayerViewPoint;
+		FRotator PlayerViewRotation;
+		
+		Controller->GetPlayerViewPoint(PlayerViewPoint, PlayerViewRotation);
+
+		FVector ViewDirection = PlayerViewRotation.RotateVector(FVector::ForwardVector);
+
+		Range = Hero->GetEquipmentComponent()->GetCurrentWeapon()->GetWeaponBarrelComponent()->GetFiringRange();
+		Damage = Hero->GetEquipmentComponent()->GetCurrentWeapon()->GetWeaponBarrelComponent()->GetDamage();
+		
+		FVector ShotStart = PlayerViewPoint;
+		FVector ShotEnd = PlayerViewPoint + ViewDirection * Range;
+
+		FHitResult ShotHitResult;
+
+		if(GetWorld()->LineTraceSingleByChannel(ShotHitResult, ShotStart, ShotEnd, ECC_Bullet))
+		{
+			ShotEnd = ShotHitResult.Location;
+			DrawDebugSphere(GetWorld(), ShotEnd, 10.f, 24, FColor::Red, false, 1.f);
+		}
+		DrawDebugLine(GetWorld(), ShotStart, ShotEnd, FColor::Green, false, 1.f, 0, 0.3f);
+
+		FGameplayEffectSpecHandle DamageEffectSpecHandle = MakeOutgoingGameplayEffectSpec(ResponseGameplayEffect, GetAbilityLevel());
+		
+		// Pass the damage to the Damage Execution Calculation through a SetByCaller value on the GameplayEffectSpec
+		DamageEffectSpecHandle.Data.Get()->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(FName("Data.Damage")), Damage);
+
+		if(UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(ShotHitResult.GetActor()))
+		{
+			DamageEffectSpecHandle = ASC->MakeOutgoingSpec(
+						ResponseGameplayEffect, 1, ASC->MakeEffectContext());
+			
+			/*DamageEffectSpecHandle.Data.Get()->SetSetByCallerMagnitude(
+				FGameplayTag::RequestGameplayTag(FName("DamageData.Base")), Damage);*/
+		
+			ASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
+		}
+		
+	}
+}
+
+void UFireShoot::OnCompleted(FGameplayTag EventTag, FGameplayEventData EventData)
+{
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

@@ -19,10 +19,10 @@ struct FWaveSpawnData : public FTableRowBase
 	TSubclassOf<AEnemyBaseCharacter> EnemyClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int EnemyCount;
+	int EnemyCount = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESpawnersID SpawnerID;
+	ESpawnersID SpawnerID = ESpawnersID::None;
 };
 
 USTRUCT(BlueprintType)

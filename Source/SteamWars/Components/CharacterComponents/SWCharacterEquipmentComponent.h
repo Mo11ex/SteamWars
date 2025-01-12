@@ -16,6 +16,8 @@ public:
 	EEquipableItemType GetCurrentEquippedItemType() const;
 
 	void FireShoot();
+
+	ARangeWeaponItem* GetCurrentWeapon() const { return CurrentEquippedWeapon; };
 	
 protected:
 	virtual void BeginPlay() override;
